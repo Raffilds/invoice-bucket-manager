@@ -1,6 +1,6 @@
 # Invoice Bucket Manager
 
-Python automation tool for locating, validating, backing up and safely removing invoice files stored in Google Cloud Storage.
+Python automation tool for locating, validating, backing up, restoring and safely removing invoice files stored in Google Cloud Storage.
 
 This project was created to reduce manual work and operational risk when incorrect invoice files are uploaded to a cloud storage bucket.
 
@@ -8,24 +8,36 @@ This project was created to reduce manual work and operational risk when incorre
 
 ## 🚀 Overview
 
-The tool reads invoice URLs from an Excel spreadsheet, extracts the required parameters, builds the expected object path inside Google Cloud Storage and validates if the file exists.
+The tool reads invoice URLs from an Excel spreadsheet, extracts the required parameters, builds the expected object path inside Google Cloud Storage and validates whether the file exists.
 
-After validation, the script can run in different execution modes:
+After validation, the script can operate in different execution modes:
 
-- Simulation mode
-- Backup-only mode
-- Production mode with backup + deletion
+* Simulation Mode
+* Backup Mode
+* Production Mode
+* Rollback Mode
+
+The solution includes:
+
+* Backup before deletion
+* Rollback support
+* TXT execution logs
+* XLSX execution logs
+* CSV reports
+* XLSX reports
+* CLI execution
+* YAML-based configuration
 
 ---
 
 ## 📥 Input Source
 
-The script reads invoice links from an Excel file.
+The script reads invoice URLs from an Excel file.
 
 Expected column:
 
 ```text
-Links
+link
 ```
 
 Example:
@@ -56,68 +68,191 @@ GD/2/5482/2_5482_21149.pdf
 
 Where:
 
-- `BT` = Low Voltage
-- `GD` = Distributed Generation
-- `COMPANY_CODE` = Company/customer code
-- `UNIT_CODE` = Energy consumer unit code
-- `INVOICE_CODE` = Invoice identifier
+* BT = Low Voltage
+* GD = Distributed Generation
+* COMPANY_CODE = Company code
+* UNIT_CODE = Consumer unit code
+* INVOICE_CODE = Invoice identifier
 
 ---
 
-## ⚙️ Execution Modes
+## 🧰 Technologies
 
-### Simulation Mode
-
-Only validates and logs the files.
-
-```text
-simulacao
-```
-
-Actions:
-
-- Reads Excel file
-- Parses invoice URLs
-- Searches files in the bucket
-- Generates logs
-- Does not copy files
-- Does not delete files
+* Python
+* Google Cloud Storage
+* Pandas
+* OpenPyXL
+* PyYAML
+* CLI Automation
+* Excel Processing
+* Logging
+* Backup & Recovery Workflow
 
 ---
 
-### Backup Mode
+## ⚙️ Installation
 
-Creates backup copies without deleting the original files.
+### Requirements
 
-```text
-backup
+* Python 3.10+
+* Google Cloud SDK
+* Access to Google Cloud Storage
+
+### Install Dependencies
+
+Using requirements.txt:
+
+```bash
+pip install -r requirements.txt
 ```
 
-Actions:
+Or manually:
 
-- Reads Excel file
-- Searches files in the bucket
-- Copies found files to the backup path
-- Keeps original files untouched
-- Logs all actions
+```bash
+pip install pandas openpyxl pyyaml google-cloud-storage
+```
 
 ---
 
-### Production Mode
+## 🔐 Google Cloud Authentication
 
-Creates backup copies and then removes the original files.
+Login to Google Cloud:
 
-```text
-producao
+```bash
+gcloud auth login
 ```
 
-Actions:
+Configure Application Default Credentials:
 
-- Reads Excel file
-- Searches files in the bucket
-- Creates backup using the same original structure
-- Deletes original files after backup
-- Logs all actions
+```bash
+gcloud auth application-default login
+```
+
+Validate access:
+
+```bash
+gsutil ls
+```
+
+---
+
+## 📁 Project Structure
+
+```text
+Google-Storage/
+│
+├── main.py
+├── config.yaml
+├── faturas_registradas.xlsx
+├── requirements.txt
+│
+├── docs/
+│   ├── logs/
+│   └── screenshots/
+│
+└── reports/
+```
+
+---
+
+## ⚙️ Configuration
+
+Example configuration file:
+
+```yaml
+bucket: example-bucket
+
+excel:
+  file: faturas_registradas.xlsx
+  column: link
+
+tipos:
+  - BT
+  - GD
+
+paths:
+  logs: docs/logs
+  reports: reports
+  backup_prefix: backup
+```
+
+---
+
+## 🚀 Execution Modes
+
+### 🧪 Simulation Mode
+
+```bash
+python main.py --mode simulacao
+```
+
+Features:
+
+* Reads Excel file
+* Parses URLs
+* Searches files in Google Cloud Storage
+* Generates reports
+* Generates logs
+* Simulates backup
+* Simulates deletion
+
+No changes are made to the bucket.
+
+---
+
+### 📦 Backup Mode
+
+```bash
+python main.py --mode backup
+```
+
+Features:
+
+* Reads Excel file
+* Searches files
+* Creates backup copies
+* Preserves original files
+* Generates reports
+* Generates logs
+
+---
+
+### 💥 Production Mode
+
+```bash
+python main.py --mode producao
+```
+
+Features:
+
+* Reads Excel file
+* Searches files
+* Creates backup copies
+* Deletes original files
+* Generates reports
+* Generates logs
+
+Required confirmations:
+
+```text
+excluir itens
+confirmar producao
+```
+
+---
+
+### 🔁 Rollback Mode
+
+```bash
+python main.py --mode rollback --data-backup 2026-06-05
+```
+
+Features:
+
+* Restores files from backup
+* Recreates original structure
+* Generates execution logs
+* Supports recovery after accidental deletion
 
 ---
 
@@ -125,19 +260,24 @@ Actions:
 
 The script does not execute deletion automatically.
 
-Before processing, the user must confirm the operation by typing:
+Before processing, the user must explicitly confirm the operation.
 
-```text
-excluir itens
-```
+Production mode requires double confirmation before any file is deleted.
 
-This helps prevent accidental deletion.
+Security mechanisms:
+
+* Simulation Mode
+* Backup before deletion
+* Double confirmation
+* Rollback support
+* Audit logs
+* Execution reports
 
 ---
 
 ## 🗂️ Backup Strategy
 
-Backups are stored inside the Google Cloud Storage bucket under a dedicated backup path.
+Backups are stored inside Google Cloud Storage using the same original structure.
 
 Example:
 
@@ -146,7 +286,27 @@ backup/2026-06-05/BT/2/31934/2_31934_31934_2.pdf
 backup/2026-06-05/GD/2/5482/2_5482_21149.pdf
 ```
 
-The backup keeps the original file structure, making future rollback easier.
+This structure allows fast recovery and rollback operations.
+
+---
+
+## 📄 Reports and Logs
+
+### Logs
+
+```text
+docs/logs/YYYY-MM-DD/
+├── log_execucao.txt
+└── log_execucao.xlsx
+```
+
+### Reports
+
+```text
+reports/
+├── relatorio.csv
+└── relatorio.xlsx
+```
 
 ---
 
@@ -181,79 +341,115 @@ Total encontrados: 37
 
 ![Process Completed](docs/screenshots/process-completed.png)
 
-> Sensitive data such as company name, bucket name, domain and real invoice identifiers were anonymized.
+> Sensitive information such as company names, bucket names, domains and invoice identifiers has been anonymized.
 
 ---
 
-## 🧭 Current Workflow
+## 🧭 Workflow
 
 ```mermaid
 flowchart TD
-    A[Excel file with invoice links] --> B[Read Links column]
-    B --> C[Parse URL parameters]
-    C --> D[Build expected GCS object path]
-    D --> E[Search object in Google Cloud Storage]
-    E --> F{File found?}
 
-    F -->|Yes| G[Add file to processing list]
-    F -->|No| H[Register not found]
+A[Excel File] --> B[Read Links]
+B --> C[Parse URL Parameters]
+C --> D[Build GCS Object Path]
+D --> E[Search in Google Cloud Storage]
 
-    G --> I[Show execution summary]
-    H --> I
+E --> F{File Found?}
 
-    I --> J{Execution mode}
+F -->|Yes| G[Add to Processing List]
+F -->|No| H[Register Not Found]
 
-    J -->|Simulation| K[Generate logs only]
-    J -->|Backup| L[Copy file to backup path]
-    J -->|Production| M[Backup file]
-    M --> N[Delete original file]
+G --> I[Generate Report]
+H --> I
 
-    K --> O[Save logs]
-    L --> O
-    N --> O
+I --> J{Execution Mode}
+
+J -->|Simulation| K[Generate Logs Only]
+
+J -->|Backup| L[Create Backup]
+
+J -->|Production| M[Create Backup]
+M --> N[Delete Original File]
+
+J -->|Rollback| O[Restore From Backup]
+
+K --> P[Save Reports]
+L --> P
+N --> P
+O --> P
 ```
-
----
-
-## 🧰 Technologies
-
-- Python
-- Google Cloud Storage
-- Excel file processing
-- URL parsing
-- CLI automation
-- Batch processing
-- Logging
-- Backup workflow
 
 ---
 
 ## ✅ Implemented Features
 
-- [x] Read invoice links from Excel
-- [x] Parse URL parameters
-- [x] Build Google Cloud Storage object path
-- [x] Search files inside the bucket
-- [x] Show found and not found files
-- [x] Manual confirmation before processing
-- [x] Simulation mode
-- [x] Backup-only mode
-- [x] Production mode
-- [x] Backup using original folder structure
-- [x] Execution logs
+* [x] Read invoice links from Excel
+* [x] Parse URL parameters
+* [x] Build Google Cloud Storage object paths
+* [x] Search files inside the bucket
+* [x] Simulation mode
+* [x] Backup mode
+* [x] Production mode
+* [x] Rollback mode
+* [x] TXT execution logs
+* [x] XLSX execution logs
+* [x] CSV reports
+* [x] XLSX reports
+* [x] Backup before deletion
+* [x] Double confirmation workflow
+* [x] CLI arguments
+* [x] YAML configuration
+* [x] Audit trail generation
 
 ---
 
-## 📌 Roadmap
+## 🛡️ Recommended Production Workflow
 
-- [ ] Generate Excel/CSV execution report
-- [ ] Add rollback command
-- [ ] Add dry-run report before execution
-- [ ] Improve error handling
-- [ ] Add unit tests
-- [ ] Add configuration file
-- [ ] Add CLI arguments
-- [ ] Add structured logging in JSON format
+```bash
+# 1 - Simulation
+python main.py --mode simulacao
+
+# 2 - Backup
+python main.py --mode backup
+
+# 3 - Validate Backup
+
+# 4 - Production
+python main.py --mode producao
+
+# 5 - Rollback (if necessary)
+python main.py --mode rollback --data-backup 2026-06-05
+```
+
+---
+
+## ❗ Common Issues
+
+### Missing Dependency
+
+```bash
+pip install pyyaml
+```
+
+### Google Cloud Authentication Error
+
+```bash
+gcloud auth application-default login
+```
+
+### Excel File Locked
+
+Close the spreadsheet before running the script.
+
+### File Not Found
+
+Verify:
+
+* URL format
+* Invoice code
+* Consumer unit code
+* File existence in Google Cloud Storage
 
 ---
 
@@ -261,33 +457,20 @@ flowchart TD
 
 This repository does not include:
 
-- Real bucket names
-- Real company domains
-- Credentials
-- Service account keys
-- Customer data
-- Invoice data
-- Internal URLs
+* Real bucket names
+* Real company domains
+* Credentials
+* Service account keys
+* Customer data
+* Invoice data
+* Internal URLs
 
 All examples use anonymized values.
 
 ---
 
-## 📄 Planned Report Example
-
-```text
-Execution Date: 2026-06-05
-Execution Mode: production
-Total Links: 38
-Found Files: 37
-Not Found Files: 1
-Backup Created: 37
-Deleted Files: 37
-Errors: 0
-```
-
----
-
 ## 📚 Lessons Learned
 
-This project improved operational reliability by reducing manual lookup time, standardizing cloud storage cleanup, adding backup validation and minimizing the risk of deleting incorrect production files.
+This project improved operational reliability by reducing manual lookup time, standardizing cloud storage cleanup operations, implementing safe deletion workflows, adding backup validation and providing rollback capabilities.
+
+The result was a safer and more auditable process for managing invoice files stored in Google Cloud Storage environments.

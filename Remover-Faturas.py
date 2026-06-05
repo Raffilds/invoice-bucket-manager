@@ -7,8 +7,8 @@ import os
 # =========================
 # CONFIG
 # =========================
-BUCKET = "tim-faturas"
-ARQUIVO_EXCEL = "faturas_registradas.xlsx"
+BUCKET = "example" #add bucket
+ARQUIVO_EXCEL = "example.xlsx" #add excel name
 
 # MODOS:
 # "simulacao" → só log (não copia nem deleta)

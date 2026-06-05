@@ -1,0 +1,14 @@
+bucket: bucket-name # Nome do bucket onde as faturas estão armazenadas.
+
+excel:
+  file: faturas_registradas.xlsx
+  column: link
+
+tipos: #sub-pastas
+  - BT
+  - GD
+
+paths:
+  logs: docs/logs
+  reports: reports
+  backup_prefix: backup
